@@ -1,3 +1,4 @@
+
 {
   "name": "finalyp",
   "version": "1.0.0",
@@ -5,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon Backend/index.js",
+    "build": "npm install --prefix Frontend/newapp && npm run build --prefix Frontend/newapp",
     "start": "node Backend/index.js"
   },
   "keywords": [],
@@ -28,3 +30,4 @@
     "socket.io": "^4.8.1"
   }
 }
+
