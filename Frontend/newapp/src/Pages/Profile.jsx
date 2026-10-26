@@ -110,7 +110,7 @@ useEffect(() => {
       formToSend.append("password", formData.password);
 
       const res = await fetch(
-        `http://localhost:8000/api/user/update/${currentUser._id}`,
+        `${import.meta.env.VITE_API_URL}/api/user/update/${currentUser._id}`,
         {
           method: "POST",
           credentials: "include",
@@ -134,7 +134,7 @@ useEffect(() => {
   const handleDeleteUser = async () => {
     try {
       dispatch(deleteUserStart());
-      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/delete/${currentUser._id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -153,7 +153,7 @@ useEffect(() => {
   const handleSignout = async () => {
     try {
       dispatch(signoutUserStart());
-      const res = await fetch("/api/auth/signout", {credentials: "include"});
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signout`, {credentials: "include"});
       const data = await res.json();
       if (data.success === false) {
         dispatch(signoutUserFailure(data.message));
@@ -168,7 +168,7 @@ useEffect(() => {
     try {
       setShowListingError(false);
       const res = await fetch(
-        `http://localhost:8000/api/user/userlistings/${currentUser._id}`,
+        `${import.meta.env.VITE_API_URL}/api/user/userlistings/${currentUser._id}`,
         { credentials: "include" }
       );
       const data = await res.json();
@@ -198,7 +198,7 @@ const sale = listingType.find(type=> type._id === "sale")?.total || 0;
 
   const handleDeleteListing = async (listingId) => {
     try {
-      const res = await fetch(`/api/listing/delete/${listingId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listing/delete/${listingId}`, {
         method: "DELETE",
         credentials: "include",
       });

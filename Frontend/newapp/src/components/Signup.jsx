@@ -40,7 +40,7 @@ export default function Signup({ setSignup }) {
     }
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
         method: 'POST',
         credentials: 'include', // Include cookies in the request
         headers: { "Content-Type": "application/json" },

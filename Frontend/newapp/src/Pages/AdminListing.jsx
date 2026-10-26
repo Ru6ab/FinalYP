@@ -16,7 +16,7 @@ export default function AdminListing() {
             setError(null)
             console.log("fetching listings")
             
-            const res = await axios.get('/api/admin/listings', { 
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/listings`, { 
                 withCredentials: true
             })
             
@@ -59,7 +59,7 @@ export default function AdminListing() {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this listing?')) {
             try {
-                await axios.delete(`/api/admin/listings/${id}`, { withCredentials: true })
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/listings/${id}`, { withCredentials: true })
                 setListings(listings.filter(listing => listing._id !== id))
             } catch (err) {
                 console.error("Error deleting listing:", err)

@@ -22,7 +22,7 @@ export default function AdminHome({openListings, openUsers}) {
     try {
       setLoading(true)
       setError(null)
-      const res = await axios.get('/api/admin/stats', { withCredentials: true })
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/stats`, { withCredentials: true })
       console.log("Response:", res)
       console.log("Data:", res.data)
       

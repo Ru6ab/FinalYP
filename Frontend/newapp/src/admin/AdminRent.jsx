@@ -12,7 +12,7 @@ export default function AdminRent() {
         try {
             setLoading(true)
             setError(null)
-            const res = await axios.get('/api/admin/listings', { withCredentials: true })
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/listings`, { withCredentials: true })
             const all = res.data.listings || []
             setListings(all.filter(l => l.type === 'rent'))
         } catch (err) {
@@ -36,7 +36,7 @@ export default function AdminRent() {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this listing?')) {
             try {
-                await axios.delete(`/api/admin/listings/${id}`, { withCredentials: true })
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/listings/${id}`, { withCredentials: true })
                 setListings(listings.filter(l => l._id !== id))
             } catch (err) {
                 alert("Failed to delete listing")

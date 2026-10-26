@@ -28,7 +28,7 @@ export default function UpdateListing() {
   useEffect(() => {
     const fetchListing = async () => {
       const listingId = params.listingId;
-      const res = await fetch(`/api/listing/get/${listingId}`,{ credentials: "include" });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listing/get/${listingId}`, { credentials: "include" });
       const data = await res.json();
       if (data.success === false) return;
       setFormData(data);
@@ -87,7 +87,7 @@ export default function UpdateListing() {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/api/listing/updatelisting/${params.listingId}`,
+        `${import.meta.env.VITE_API_URL}/api/listing/updatelisting/${params.listingId}`,
         { method: "PUT", body: submitData, credentials: "include" }
       );
       const data = await res.json();

@@ -66,7 +66,7 @@ export default function CreateListing() {
     console.log("Form Data being sent:", submitData);
     try {
       const res = await fetch(
-        "http://localhost:8000/api/listing/createListing",
+        `${import.meta.env.VITE_API_URL}/api/listing/createListing`,
         {
           method: "POST",
           body: submitData,

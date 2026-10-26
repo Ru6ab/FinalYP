@@ -22,7 +22,7 @@ export default function NewProfile() {
       formToSend.append("email", formData.email);
       formToSend.append("password", formData.password);
 
-      const res = await fetch(`/api/user/upload/${currentUser._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/upload/${currentUser._id}`, {
         method: "POST",
         credentials: "include",
         body: formToSend,
