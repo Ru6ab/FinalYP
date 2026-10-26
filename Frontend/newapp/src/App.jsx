@@ -25,12 +25,12 @@ export default function App() {
 
  return (
     <>    
-      {/* Hide Navbar on the /search page */}
-      {/* {location.pathname !== "/search" && location.pathname !== '/about' && <Navbar />} */}
+      {/* Hide Navbar on the /search page  */}
+      {location.pathname !== "/search" && location.pathname !== '/about' && <Navbar />}
 
  
-        <FormForMakeWebHook/> 
-      {/* <Routes>
+      
+      <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/search" element={<Search />} />
@@ -47,7 +47,7 @@ export default function App() {
            <Route path="/admin/listings/sale" element={<AdminSale/>}/>
           <Route path ='/admin/users/all' element= {<AdminUsers/>}/>
         </Route>
-      </Routes>       */}
+      </Routes>       
     </>   
    
 
