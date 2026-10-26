@@ -153,7 +153,7 @@ useEffect(() => {
   const handleSignout = async () => {
     try {
       dispatch(signoutUserStart());
-      const res = await fetch("/api/auth/signout");
+      const res = await fetch("/api/auth/signout", {credentials: "include"});
       const data = await res.json();
       if (data.success === false) {
         dispatch(signoutUserFailure(data.message));

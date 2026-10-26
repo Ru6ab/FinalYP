@@ -24,6 +24,7 @@ export default function NewProfile() {
 
       const res = await fetch(`/api/user/upload/${currentUser._id}`, {
         method: "POST",
+        credentials: "include",
         body: formToSend,
       });
       const data =await res.json();

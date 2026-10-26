@@ -28,7 +28,8 @@ export const signup = async (req, res, next) => {
     const { password: _, ...restProfile } = newUser._doc;
 
     res
-      .cookie("access_token", token, { httpOnly: true })
+      .cookie("access_token", token, { httpOnly: true,  sameSite: "none",
+  secure: true, })
       .status(201)
       .json(restProfile);
   } catch (error) {
@@ -55,7 +56,8 @@ export const signin = async (req, res) => {
     const { password: _, ...restProfile } = validUser._doc;
 
     return res
-      .cookie("access_token", token, { httpOnly: true, maxAge: 7 * 24 * 60 *60 * 1000  })
+      .cookie("access_token", token, { httpOnly: true,  sameSite: "none",
+  secure: true,  maxAge: 7 * 24 * 60 *60 * 1000  })
       .status(200)
       .json({ success: true, ...restProfile });
 
@@ -76,7 +78,8 @@ export const googleAuth = async (req, res, next) => {
       console.log(token,"token generated for google auth")
       const { password: _, ...restProfile } = user._doc;
       return res
-        .cookie("access_token", token, { httpOnly: true })
+        .cookie("access_token", token, { httpOnly: true,  sameSite: "none",
+  secure: true, })
         .status(200)
         .json(restProfile);
     }
@@ -95,7 +98,8 @@ export const googleAuth = async (req, res, next) => {
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);   
     const { password: _, ...restProfile } = newUser._doc;
        res
-      .cookie("access_token", token, { httpOnly: true })
+      .cookie("access_token", token, { httpOnly: true,  sameSite: "none",
+  secure: true, })
       .status(200)
       .json(restProfile);
   } catch (error) {

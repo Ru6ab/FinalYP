@@ -30,7 +30,7 @@ export default function Listing() {
       const listingId = params.listingId;
       try {
         setLoading(true);
-        const res = await fetch(`/api/listing/get/${listingId}`);
+        const res = await fetch(`/api/listing/get/${listingId}`,{ credentials: "include" });
         const data = await res.json();
         console.log("Fetched listing data:", data);
         if (data.success === false) {

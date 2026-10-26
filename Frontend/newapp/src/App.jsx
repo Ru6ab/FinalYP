@@ -17,14 +17,20 @@ import AdminListing from "./Pages/AdminListing";
 import AdminUsers from "./Pages/AdminUsers";
 import AdminRent from "./admin/AdminRent";
 import AdminSale from "./admin/AdminSale";
+import FormForMakeWebHook from "./components/FormForMakeWebHook";
+
 export default function App() {
 //  const location = useLocation(); // Get current route
+ 
+
  return (
     <>    
       {/* Hide Navbar on the /search page */}
       {/* {location.pathname !== "/search" && location.pathname !== '/about' && <Navbar />} */}
 
-      <Routes>
+ 
+        <FormForMakeWebHook/> 
+      {/* <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/search" element={<Search />} />
@@ -41,8 +47,10 @@ export default function App() {
            <Route path="/admin/listings/sale" element={<AdminSale/>}/>
           <Route path ='/admin/users/all' element= {<AdminUsers/>}/>
         </Route>
-      </Routes>      
+      </Routes>       */}
     </>   
+   
+
  )
 }
 

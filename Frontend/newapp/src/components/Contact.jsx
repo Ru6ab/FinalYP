@@ -74,7 +74,9 @@ export default function Contact({ listing }) {
   useEffect(() => {
     const getOwner = async () => {
       try {
-        const res = await fetch(`/api/user/${listing.userRef}`);
+        const res = await fetch(`/api/user/${listing.userRef}`,  {
+  credentials: "include",
+});
         const data = await res.json();
         setOwner(data);
       } catch (error) {
@@ -91,6 +93,7 @@ export default function Contact({ listing }) {
       setLoading(true);
       const res = await fetch("/api/contact/send", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ownerEmail: owner.email,
