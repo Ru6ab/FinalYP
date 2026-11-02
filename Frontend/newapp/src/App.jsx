@@ -1,4 +1,7 @@
-import { Route, Routes, useLocation ,BrowserRouter} from "react-router-dom";
+
+
+import { Route, Routes, useLocation } from "react-router-dom";
+import { AuthModalProvider } from "./components/AuthModalProvider";
 import Navbar from "./components/Navbar";
 import Home from "./Pages/Home";
 import About from "./Pages/About";
@@ -17,43 +20,37 @@ import AdminListing from "./Pages/AdminListing";
 import AdminUsers from "./Pages/AdminUsers";
 import AdminRent from "./admin/AdminRent";
 import AdminSale from "./admin/AdminSale";
-import FormForMakeWebHook from "./components/FormForMakeWebHook";
+
 
 export default function App() {
-//  const location = useLocation(); // Get current route
- 
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith("/admin");
 
- return (
-    <>    
-      {/* Hide Navbar on the /search page  */}
-      {location.pathname !== "/search" && location.pathname !== '/about' && <Navbar />}
-
- 
-      
-      <Routes>
-        <Route path="/" element={<Home />} />
+  return (
+    <AuthModalProvider>
+      {!isAdmin && <Navbar />}
+      <main className={isAdmin ? "" : "pt-16"}>
+        <Routes>
+           <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/search" element={<Search />} />
-        <Route path="/listing/:listingId" element={<Listing/>}/>
+       <Route path="/listing/:listingId" element={<Listing/>}/>
         <Route element = {<PrivateRoute/>}>
         <Route path="/profile" element={<Profile/>}/>
-        <Route path="/createlisting" element={<CreateListing />} />
+       <Route path="/createlisting" element={<CreateListing />} />
         <Route path="/updatelisting/:listingId" element = {<UpdateListing/>}/>
         </Route>
         <Route element = {<AdminRoute/>}>
         <Route path="/admin/dashboard" element = {<AdminDashboard/>}/>
         <Route path ='/admin/listings' element= {<AdminListing/>}/>
-        <Route path="/admin/listings/rent" element={<AdminRent/>}/>
-           <Route path="/admin/listings/sale" element={<AdminSale/>}/>
+               <Route path="/admin/listings/rent" element={<AdminRent/>}/>
+            <Route path="/admin/listings/sale" element={<AdminSale/>}/>
           <Route path ='/admin/users/all' element= {<AdminUsers/>}/>
-        </Route>
-      </Routes>       
-    </>   
-   
-
- )
+       </Route>
+        </Routes>
+      </main>
+    </AuthModalProvider>
+  );
 }
-
-
 
 

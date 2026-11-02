@@ -114,66 +114,124 @@ console.log("Updated imgs:", updatedImgUrls);
   }
 };
 
- export const getListing = async(req,res,next)=>{
-  try{
-    const listing = await Listing.findById(req.params.id)
-    if(!listing){
-      return next(errorHandler(404,"listing not found"))
-    }
-  res.status(200).json(listing)
-  }catch(error){
-   next(error)
-  }
- }
-
-
-export const getListings = async (req, res, next) => {
+//  export const getListing = async(req,res,next)=>{
+//   try{
+//     const listing = await Listing.findById(req.params.id)
+//     if(!listing){
+//       return next(errorHandler(404,"listing not found"))
+//     }
+//   res.status(200).json(listing)
+//   }catch(error){
+//    next(error)
+//   }
+//  }
+export const getListing = async (req, res, next) => {
   try {
-    const limit = parseInt(req.query.limit) || 9;
-    const page = parseInt(req.query.page) || 1;
-    const startIndex = (page - 1) * limit;
-
-    const type =
-      req.query.type === 'all' || !req.query.type
-        ? { $in: ['rent', 'sale'] }
-        : { $eq: req.query.type };
-
-    const offer = req.query.offer === 'true' ? true : undefined;
-    const parking = req.query.parking === 'true' ? true : undefined;
-    const furnished = req.query.furnished === 'true' ? true : undefined;
-
-    const searchTerm = req.query.searchTerm || '';
-    const searchRegex =
-      searchTerm.trim() !== ''
-        ? { name: { $regex: searchTerm.trim(), $options: 'i' } }
-        : {};
-
-    const sortBy = req.query.sort || 'createdAt';
-    const sortOrder = req.query.order === 'asc' ? 1 : -1;
-
-    const query = {
-      ...searchRegex,
-      type,
-      ...(offer !== undefined && { offer }),
-      ...(parking !== undefined && { parking }),
-      ...(furnished !== undefined && { furnished }),
-    };
-
-    console.log('Final Mongo query:', query);
-
-    let listings = await Listing.find(query)
-      .sort({ [sortBy]: sortOrder })
-      .skip(startIndex)
-      .limit(limit);
-
-   
-     console.log("Final listings being sent:", listings);
-
-    return res.status(200).json(listings);
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) return next(errorHandler(404, "Listing not found"));
+    res.status(200).json(listing);
   } catch (error) {
-    console.log('Error in getListings:', error.message);
+    if (error.name === "CastError") return next(errorHandler(404, "Listing not found"));
     next(error);
   }
 };
 
 
+// export const getListings = async (req, res, next) => {
+//   try {
+//     const limit = parseInt(req.query.limit) || 9;
+//     const page = parseInt(req.query.page) || 1;
+//     const startIndex = (page - 1) * limit;
+
+//     const type =
+//       req.query.type === 'all' || !req.query.type
+//         ? { $in: ['rent', 'sale'] }
+//         : { $eq: req.query.type };
+
+//     const offer = req.query.offer === 'true' ? true : undefined;
+//     const parking = req.query.parking === 'true' ? true : undefined;
+//     const furnished = req.query.furnished === 'true' ? true : undefined;
+
+//     const searchTerm = req.query.searchTerm || '';
+//     const searchRegex =
+//       searchTerm.trim() !== ''
+//         ? { name: { $regex: searchTerm.trim(), $options: 'i' } }
+//         : {};
+
+//     const sortBy = req.query.sort || 'createdAt';
+//     const sortOrder = req.query.order === 'asc' ? 1 : -1;
+
+//     const query = {
+//       ...searchRegex,
+//       type,
+//       ...(offer !== undefined && { offer }),
+//       ...(parking !== undefined && { parking }),
+//       ...(furnished !== undefined && { furnished }),
+//     };
+
+//     console.log('Final Mongo query:', query);
+
+//     let listings = await Listing.find(query)
+//       .sort({ [sortBy]: sortOrder })
+//       .skip(startIndex)
+//       .limit(limit);
+
+   
+//      console.log("Final listings being sent:", listings);
+
+//     return res.status(200).json(listings);
+//   } catch (error) {
+//     console.log('Error in getListings:', error.message);
+//     next(error);
+//   }
+// };
+
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const getListings = async (req, res, next) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 9, 50);
+
+    // supports both ?startIndex=9 (Show more) and ?page=2
+    const startIndex =
+      req.query.startIndex !== undefined
+        ? parseInt(req.query.startIndex) || 0
+        : ((parseInt(req.query.page) || 1) - 1) * limit;
+
+    const type =
+      req.query.type === "rent" || req.query.type === "sale"
+        ? req.query.type
+        : { $in: ["rent", "sale"] };
+
+    const query = { type };
+    if (req.query.offer === "true") query.offer = true;
+    if (req.query.parking === "true") query.parking = true;
+    if (req.query.furnished === "true") query.furnished = true;
+
+    // every word must appear in the name OR the address (any order)
+    const words = (req.query.searchTerm || "")
+      .trim()
+      .split(/[\s,]+/)
+      .filter(Boolean);
+
+    if (words.length) {
+      query.$and = words.map((w) => {
+        const rx = new RegExp(escapeRegex(w), "i");
+        return { $or: [{ name: rx }, { address: rx }] };
+      });
+    }
+
+    const allowedSort = ["createdAt", "regularPrice"];
+    const sortBy = allowedSort.includes(req.query.sort) ? req.query.sort : "createdAt";
+    const sortOrder = req.query.order === "asc" ? 1 : -1;
+
+    const listings = await Listing.find(query)
+      .sort({ [sortBy]: sortOrder, _id: -1 })
+      .skip(startIndex)
+      .limit(limit);
+
+    return res.status(200).json(listings);
+  } catch (error) {
+    next(error);
+  }
+};

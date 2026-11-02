@@ -1,149 +1,162 @@
-
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { RxCross2 } from "react-icons/rx";
-import { FaGoogle } from "react-icons/fa";
-import { MdOutlineRemoveRedEye } from "react-icons/md";
+import { MdOutlineRemoveRedEye, MdOutlineVisibilityOff } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
-import { signinFailure, signinStart, signinSuccess } from "../redux/user/userSlice";
 import { useNavigate } from "react-router-dom";
-import AuthWGoogle from './AuthWGoogle'
+import { signinFailure, signinStart, signinSuccess } from "../redux/user/userSlice";
+import AuthWGoogle from "./AuthWGoogle";
 
-export default function Signup({ setSignup }) {
+const inputCls =
+  "w-full rounded-md border border-slate-300 px-3 py-2.5 text-base outline-none transition placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100";
+
+const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+export default function Signup({ setSignup, onSwitch }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-  // Get loading and error from Redux state
-  const { loading, error } = useSelector((state) => state.user);
-
+  const { loading, error } = useSelector((state) => state.user || {});
   const [showPass, setShowPass] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value,
-    });
-  };
+  // clear any old error (e.g. from the sign in form) when this opens
+  useEffect(() => {
+    dispatch(signinFailure(null));
+  }, [dispatch]);
+
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.id]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(signinStart());
-
-    const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
     if (!passwordPattern.test(formData.password)) {
-      dispatch(signinFailure('Password must be at least 8 characters long and contain a number and a special character.'));
+      dispatch(
+        signinFailure(
+          "Password must be at least 8 characters and include a letter, a number and a special character (@$!%*?&)."
+        )
+      );
       return;
     }
 
+    dispatch(signinStart());
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signup`, {
-        method: 'POST',
-        credentials: 'include', // Include cookies in the request
+        method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
-
       const data = await response.json();
 
-      if (response.ok) {
-        // Assuming your backend sends savedUser inside data
-        dispatch(signinSuccess(data));
-        navigate("/profile");
-      } else {
-        dispatch(signinFailure(data.message || "Signup failed"));
+      if (!response.ok) {
+        dispatch(signinFailure(data?.message || "Signup failed."));
+        return;
       }
+
+      dispatch(signinSuccess(data));
+      setSignup(false);
+      navigate("/profile");
     } catch (err) {
-      dispatch(signinFailure(err.message || "Something went wrong"));
+      dispatch(signinFailure("Network error. Try again."));
     }
   };
 
   return (
-    <div className="w-[345px] h-[470px] bg-white rounded-[10px] flex flex-col gap-6 px-4 py-6 ">
-      <div className="flex justify-between items-center">
-        <h1 className="text-neutral-700 font-bold text-[25px] tracking-wide">Sign Up</h1>
-        <RxCross2 fontSize={25} onClick={() => setSignup(false)} />
+    <div className="w-full">
+      {/* Header */}
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Create account</h1>
+          <p className="mt-1 text-sm text-slate-500">Sign up to list and contact owners</p>
+        </div>
+        <button
+          onClick={() => setSignup(false)}
+          aria-label="Close"
+          className="rounded-full p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+        >
+          <RxCross2 size={24} />
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="font-bold text-[15px]  text-neutral-500 mb-1 tracking-wide" htmlFor="email">
-            Email Address <span className="text-rose-500 text-[17px]">*</span>
+          <label htmlFor="email" className="mb-1 block text-sm font-semibold text-slate-700">
+            Email address
           </label>
           <input
-            placeholder="Enter Email Address"
-            type="email"
             id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            className={inputCls}
             onChange={handleChange}
-            className="w-full p-1 text-lg placeholder:text-lg placeholder:text-gray-400 border-2 border-gray-400 focus:border-gray-800 rounded-md"
             required
           />
         </div>
 
         <div>
-          <label className="font-bold text-[15px] text-neutral-500 mb-1 tracking-wide" htmlFor="password">
-            Password <span className="text-rose-500 text-[17px]">*</span>
+          <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-700">
+            Password
           </label>
-          <div className="flex justify-between items-center relative">
+          <div className="relative">
             <input
-              placeholder="Enter Password"
-              type={showPass ? "text" : "password"}
               id="password"
+              type={showPass ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="Create password"
+              className={`${inputCls} pr-11`}
               onChange={handleChange}
-              className="w-full p-1 text-lg placeholder:text-lg placeholder:text-gray-400 border-2 border-gray-400 focus:border-gray-800 rounded-md"
               required
             />
-            <MdOutlineRemoveRedEye
-              onClick={() => setShowPass((prev) => !prev)}
-              fontSize={30}
-              className="absolute right-0 pr-2 text-neutral-500 cursor-pointer"
-            />
+            <button
+              type="button"
+              onClick={() => setShowPass((p) => !p)}
+              aria-label={showPass ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 px-3 text-slate-500 hover:text-slate-800"
+            >
+              {showPass ? <MdOutlineVisibilityOff size={22} /> : <MdOutlineRemoveRedEye size={22} />}
+            </button>
           </div>
-          {/* <p className={` ${error ? "text-rose-500" : "text-neutral-400"}`}>
-            Password must be at least 8 characters and include a number or special character.
-          </p> */}
+          <p className="mt-1 text-xs text-slate-500">
+            At least 8 characters with a number and a special character.
+          </p>
         </div>
 
         {error && (
-          <p className="text-rose-600 text-center mt-1 font-semibold">Can't signup. Try later!</p>
+          <p className="rounded-md bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
+            {typeof error === "string" ? error : "Something went wrong."}
+          </p>
         )}
 
-        <div className="mt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-rose-600 text-white font-semibold text-[17px] w-full p-2 rounded-md tracking-wide"
-          >
-            {loading ? "Loading..." : "Sign Up"}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-md bg-blue-700 py-2.5 font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
+        >
+          {loading ? "Creating account..." : "Sign Up"}
+        </button>
       </form>
 
-      {/* <div className="flex items-center">
-        <div className="flex-1 border-t border-neutral-300 border-[1px]" />
-        <h1 className="mx-2 text-neutral-600 font-bold">OR SIGN UP WITH</h1>
-        <div className="flex-1 border-t border-neutral-300 border-[1px]" />
+      {/* Divider */}
+      <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <span className="h-px flex-1 bg-slate-200" />
+        or sign up with
+        <span className="h-px flex-1 bg-slate-200" />
       </div>
 
-      <div className="flex justify-center items-center">
-        <button className="flex items-center border-blue-700 border-[2px]">
-          <FaGoogle className="text-red-600 p-1" size={22} />
-          <h1 className="text-white bg-blue-700 py-1 px-8 font-semibold text-[18px]">Google</h1>
-        </button>
-      </div> */}
+      <div className="flex justify-center">
+        <AuthWGoogle onSuccess={() => setSignup(false)} />
+      </div>
 
-       <div className="flex items-center mt-6">
-                <div className="flex-1 border-t border-neutral-300 border-[1px]"></div>
-                <h1 className="mx-2 text-neutral-600 font-bold ">OR SIGN UP WITH</h1>
-                <div className="flex-1 border-t border-neutral-300 border-[1px]"></div>
-              </div>
-      
-              <div className="mt-6 flex justify-center items-center">
-               <AuthWGoogle/>
-              </div>
+      {onSwitch && (
+        <p className="mt-5 text-center text-sm text-slate-600">
+          Already have an account?{" "}
+          <button onClick={onSwitch} className="font-semibold text-blue-700 hover:underline">
+            Log in
+          </button>
+        </p>
+      )}
     </div>
   );
 }

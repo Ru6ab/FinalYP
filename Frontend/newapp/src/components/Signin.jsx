@@ -1,174 +1,146 @@
 import React, { useState } from "react";
 import { RxCross2 } from "react-icons/rx";
-import { FaGoogle } from "react-icons/fa";
-import { MdOutlineRemoveRedEye, MdPassword } from "react-icons/md";
-import {Link,useNavigate} from 'react-router-dom'
+import { MdOutlineRemoveRedEye, MdOutlineVisibilityOff } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { signinFailure,signinStart,signinSuccess } from "../redux/user/userSlice";
-import AuthWGoogle from './AuthWGoogle'
-import Profile from '../Pages/Profile'
+import { signinFailure, signinStart, signinSuccess } from "../redux/user/userSlice";
+import AuthWGoogle from "./AuthWGoogle";
 
+const inputCls =
+  "w-full rounded-md border border-slate-300 px-3 py-2.5 text-base outline-none transition placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100";
 
-export default function Signin({ setSignin }) {
+export default function Signin({ setSignin, onSwitch }) {
   const navigate = useNavigate();
-  const dispatch = useDispatch()
-  // const {loading, error} = useSelector((state)=>state.user)
-  // const defaultUserState = { loading:false,error :null }
-   const { loading, error ,currentUser } = useSelector((state) => state.user ||  { loading:false,error :null });
-  
-console.log(currentUser + " from signin")
-  // const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState(false);
-  const [showPass,setShowPass] = useState(false);  
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  }); 
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.user || {});
+  const [showPass, setShowPass] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
-  console.log("Redux loading:", loading);
-console.log("Redux error:", error);
-console.log("Redux state:", useSelector((state) => state));
-{console.log("Error in JSX:", error)}
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.id]: e.target.value });
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const handleChange=(e)=>{
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value
-    })
-  }
-  
-
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  dispatch(signinStart());
-
-  // ✅ Stop if fields are empty
-  if (!formData.email || !formData.password) {
-    dispatch(signinFailure("Email and password are required."));
-    return;
-  }
-
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signin`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await response.json()
-    console.log("Response text:", data);
-
-    
-    if (!response.ok || !data) {
-      const message =  "Signin failed." ||  data?.message;
-      dispatch(signinFailure(message));
+    if (!formData.email || !formData.password) {
+      dispatch(signinFailure("Email and password are required."));
       return;
     }
 
-    dispatch(signinSuccess(data));
-    console.log("Logged in user role:", data.role);
-    if(data.role === "admin"){
-      console.log("role is",data.role)
-      navigate("/admin/dashboard")
-    }else
-    navigate("/profile");
-  } catch (error) {
-    dispatch(signinFailure("Network error. Try again."));
-    console.error("Fetch error:", error);
-  }
-};
+    dispatch(signinStart());
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signin`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
 
+      if (!response.ok || !data) {
+        dispatch(signinFailure(data?.message || "Signin failed."));
+        return;
+      }
 
+      dispatch(signinSuccess(data));
+      setSignin(false);
+      navigate(data.role === "admin" ? "/admin/dashboard" : "/profile");
+    } catch (err) {
+      dispatch(signinFailure("Network error. Try again."));
+    }
+  };
 
-
-  
-
-return (
-    <div className="w-[345px] h-[470px] bg-white rounded-[10px] flex flex-col gap-6 px-4 py-6 ">
-      <div className="  flex justify-between items-center   ">
+  return (
+    <div className="w-full">
+      {/* Header */}
+      <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-neutral-700 font-bold text-[25px] tracking-wide">
-            Log In
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
+          <p className="mt-1 text-sm text-slate-500">Log in to your account</p>
         </div>
-        <div className="text-blue-700">
-          <RxCross2
-            fontSize={25}
-            onClick={() => {
-              setSignin(false);
-            }}
+        <button
+          onClick={() => setSignin(false)}
+          aria-label="Close"
+          className="rounded-full p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+        >
+          <RxCross2 size={24} />
+        </button>
+      </div>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="mb-1 block text-sm font-semibold text-slate-700">
+            Email address
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            className={inputCls}
+            onChange={handleChange}
           />
         </div>
-      </div>
 
-      <div className="flex flex-col ">
-        <form onSubmit={handleSubmit} id="signinForm">
-          <div className="mb-4">
-            <h1 className="font-bold text-[15px] text-neutral-500 mb-1 tracking-wide">
-              Email Address <span className="text-rose-500 text-[17px]">*</span>
-            </h1>
-
+        <div>
+          <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-700">
+            Password
+          </label>
+          <div className="relative">
             <input
-              placeholder="Enter Email Address"
-              id="email"
-              className="w-full p-1   text-lg placeholder:text-lg placeholder:text-gray-400  border-2 border-gray-400 focus:border-gray-800 rounded-md"
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="">
-            <h1 className="font-bold text-[15px] text-neutral-500 mb-1 tracking-wide">
-              Password <span className="text-rose-500 text-[17px]">*</span>
-            </h1>
-
-             <div className="flex justify-between items-center relative "> 
-            <input
-              placeholder="Enter Password"
-              className="w-full p-1   text-lg placeholder:text-lg placeholder:text-gray-400 border-2 border-gray-400 focus:border-gray-800  rounded-md"
               id="password"
-            type={showPass ? "text":"password"}
+              type={showPass ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Enter password"
+              className={`${inputCls} pr-11`}
               onChange={handleChange}
             />
-            <MdOutlineRemoveRedEye
-            //  onClick={()=>{setShowPass(true)}} will make true for all clicks after the first click is true,  no way to false
-            onClick={()=>setShowPass((prev)=>!prev)}
-              fontSize={30}
-              className="absolute right-0 pr-2  text-neutral-500"
-            />
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowPass((p) => !p)}
+              aria-label={showPass ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 px-3 text-slate-500 hover:text-slate-800"
+            >
+              {showPass ? <MdOutlineVisibilityOff size={22} /> : <MdOutlineRemoveRedEye size={22} />}
+            </button>
           </div>
-        </form>
-
-        <div className="mt-4 flex flex-col  justify-center items-center">
-          {console.log("Error in JSX:", error)}
-         {error && <div className="text-[14px] text-rose-500 font-bold ">   {typeof error === "string" ? error : JSON.stringify(error)}</div>}
-
-         
-        </div>
-        <div className="mt-4">
-       
-          <button
-            type="submit"
-            form="signinForm"
-            className="bg-rose-600 text-white font-semibold text-[17px] w-full p-2 rounded-md tracking-wide"
-          >
-           {loading ? "Loading..."  : "Sign In"}
-       
-          </button>
-        </div>
-        <div className="flex items-center mt-6">
-          <div className="flex-1 border-t border-neutral-300 border-[1px]"></div>
-          <h1 className="mx-2 text-neutral-600 font-bold ">OR SIGN IN WITH</h1>
-          <div className="flex-1 border-t border-neutral-300 border-[1px]"></div>
         </div>
 
-        <div className="mt-6 flex justify-center items-center">
-         <AuthWGoogle/>
-        </div>
+        {error && (
+          <p className="rounded-md bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
+            {typeof error === "string" ? error : "Something went wrong."}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-md bg-blue-700 py-2.5 font-semibold text-white transition hover:bg-blue-800 disabled:opacity-60"
+        >
+          {loading ? "Signing in..." : "Sign In"}
+        </button>
+      </form>
+
+      {/* Divider */}
+      <div className="my-5 flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <span className="h-px flex-1 bg-slate-200" />
+        or continue with
+        <span className="h-px flex-1 bg-slate-200" />
       </div>
+
+      <div className="flex justify-center">
+        <AuthWGoogle  onSuccess={() => setSignin(false)}/>
+      </div>
+
+      {onSwitch && (
+        <p className="mt-5 text-center text-sm text-slate-600">
+          Don't have an account?{" "}
+          <button onClick={onSwitch} className="font-semibold text-blue-700 hover:underline">
+            Sign up
+          </button>
+        </p>
+      )}
     </div>
   );
 }

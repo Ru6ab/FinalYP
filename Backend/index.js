@@ -34,9 +34,11 @@ mongoose
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
+const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:5173"].filter(Boolean);
+
 app.use(
   cors({
-    origin: isProduction ? process.env.CLIENT_URL : "http://localhost:5173", // CHANGED
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -52,6 +54,7 @@ const io = new Server(server, {
 });
 
 const onlineUsers = new Map();
+
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);

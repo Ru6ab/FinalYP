@@ -1,58 +1,69 @@
-import React from 'react'
-import {GoogleAuthProvider, getAuth, signInWithPopup} from 'firebase/auth'
-import { app } from '../firebase'
-import { FaGoogle } from 'react-icons/fa';
-import { useDispatch } from 'react-redux';
-import { signinSuccess } from '../redux/user/userSlice';
-import {useNavigate } from 'react-router-dom'
-import Profile from '../Pages/Profile';
+import React, { useState } from "react";
+import { GoogleAuthProvider, getAuth, signInWithPopup } from "firebase/auth";
+import { FcGoogle } from "react-icons/fc";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { app } from "../firebase";
+import { signinSuccess } from "../redux/user/userSlice";
 
-export default function AuthWGoogle() {
-  const dispatch =  useDispatch();
+export default function AuthWGoogle({ onSuccess }) {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    const handleGoogleClick = async ()=>{
-        try{
-          const provider  =  new GoogleAuthProvider()
-          const auth = getAuth(app)
-          const result = await signInWithPopup(auth,provider)
-          console.log("This will run before popup result");
-          console.log(result," this is result")
-          const res =await  fetch(`${import.meta.env.VITE_API_URL}/api/auth/google`,{
-            method:"POST",
-            headers:{
-            "Content-Type":"application/JSON"
-            },
-            credentials: 'include',
-            body:JSON.stringify({ avatar:result.user.photoURL, email: result.user.email, name:result.user.displayName })
-            })
-        //     const userData = { photo:result.user.photoURL, email: result.user.email, name:result.user.displayName }
-         const data = await res.json()
-         console.log(data)
-          dispatch(signinSuccess(data))
-           console.log("Logged in user role:", data.role);
-    if(data.role === "admin"){
-      console.log("role is",data.role)
-      navigate("/admin/dashboard")
-    }else
-    navigate("/profile");
-        
-          
-        }
-        catch(error){
-            console.log("error occured in catch of auth component", error)
-        }
+  const handleGoogleClick = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      const auth = getAuth(app);
+
+      const result = await signInWithPopup(auth, provider);
+      console.log("1. Firebase OK:", result.user.email);
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          avatar: result.user.photoURL,
+          email: result.user.email,
+          name: result.user.displayName,
+        }),
+      });
+      console.log("2. Backend status:", res.status);
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.message || `Server error (${res.status}).`);
+        return;
+      }
+
+      dispatch(signinSuccess(data));
+      onSuccess?.();
+      navigate(data.role === "admin" ? "/admin/dashboard" : "/profile");
+    } catch (err) {
+      console.error("Google auth error:", err.code, err.message, err);
+      setError(`Google sign in failed (${err.code || err.message}).`);
+    } finally {
+      setLoading(false);
     }
+  };
+
   return (
-    <div>
-       <button onClick={handleGoogleClick} type='button'
-        className="flex items-center border-blue-700 border-[2px] ">
-            <FaGoogle className="text-red-600 p-1" size={22} />
-            <h1 className="text-white bg-blue-700 py-1 px-8 font-semibold text-[18px]">
-              Google
-            </h1>
-            
-          </button>
+    <div className="w-full">
+      <button
+        type="button"
+        onClick={handleGoogleClick}
+        disabled={loading}
+        className="flex w-full items-center justify-center gap-3 rounded-md border border-slate-300 bg-white py-2.5 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+      >
+        <FcGoogle size={22} />
+        {loading ? "Please wait..." : "Continue with Google"}
+      </button>
+      {error && <p className="mt-2 text-center text-sm font-medium text-rose-600">{error}</p>}
     </div>
-  )
+  );
 }

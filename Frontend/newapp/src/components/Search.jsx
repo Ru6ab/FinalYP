@@ -1,272 +1,253 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import ListingItem from '../components/ListingItem';
-import Navbar from '../components/Navbar'
+
+
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { FaSearch, FaSlidersH } from "react-icons/fa";
+import ListingItem from "../components/ListingItem";
+
+const API = import.meta.env.VITE_API_URL;
+const PAGE_SIZE = 9;
+
+const readParams = (search) => {
+  const p = new URLSearchParams(search);
+  return {
+    searchTerm: p.get("searchTerm") || "",
+    type: p.get("type") || "all",
+    parking: p.get("parking") === "true",
+    furnished: p.get("furnished") === "true",
+    offer: p.get("offer") === "true",
+    sort: p.get("sort") || "createdAt",
+    order: p.get("order") || "desc",
+  };
+};
+
+const inputCls =
+  "w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none transition placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100";
 
 export default function Search() {
   const navigate = useNavigate();
-  const [sidebardata, setSidebardata] = useState({
-    searchTerm: '',
-    type: 'all',
-    parking: false,
-    furnished: false,
-    offer: false,
-    sort: 'created_at',
-    order: 'desc',
-  });
+  const { search } = useLocation();
 
-  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState(readParams(search));
   const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
+  // sync filters + fetch whenever the URL changes
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const searchTermFromUrl = urlParams.get('searchTerm');
-    const typeFromUrl = urlParams.get('type');
-    const parkingFromUrl = urlParams.get('parking');
-    const furnishedFromUrl = urlParams.get('furnished');
-    const offerFromUrl = urlParams.get('offer');
-    const sortFromUrl = urlParams.get('sort');
-    const orderFromUrl = urlParams.get('order');
+    setFilters(readParams(search));
+    let cancelled = false;
 
-    if (
-      searchTermFromUrl ||
-      typeFromUrl ||
-      parkingFromUrl ||
-      furnishedFromUrl ||
-      offerFromUrl ||
-      sortFromUrl ||
-      orderFromUrl
-    ) {
-      setSidebardata({
-        searchTerm: searchTermFromUrl || '',
-        type: typeFromUrl || 'all',
-        parking: parkingFromUrl === 'true' ? true : false,
-        furnished: furnishedFromUrl === 'true' ? true : false,
-        offer: offerFromUrl === 'true' ? true : false,
-        sort: sortFromUrl || 'created_at',
-        order: orderFromUrl || 'desc',
-      });
-    }
-
-    const fetchListings = async () => {
+    const load = async () => {
       setLoading(true);
-      setShowMore(false);
-      const searchQuery = urlParams.toString();
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listing/get?${searchQuery}`, { credentials: "include" });
-      const data = await res.json();
-      if (!Array.isArray(data)) {
-  console.error("Expected array, got:", data);
-  return;
-}
-      if (data.length > 8) {
-        setShowMore(true);
-      } else {
-        setShowMore(false);
+      setError(false);
+      try {
+        const res = await fetch(`${API}/api/listing/get?${new URLSearchParams(search)}`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (!Array.isArray(data)) {
+          setError(true);
+          setListings([]);
+          setShowMore(false);
+          return;
+        }
+        setListings(data);
+        setShowMore(data.length >= PAGE_SIZE);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setListings(data);
-      setLoading(false);
     };
 
-    fetchListings();
-  }, [location.search]);
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [search]);
 
-  const handleChange = (e) => {
-    if (
-      e.target.id === 'all' ||
-      e.target.id === 'rent' ||
-      e.target.id === 'sale'
-    ) {
-      setSidebardata({ ...sidebardata, type: e.target.id });
-    }
-
-    if (e.target.id === 'searchTerm') {
-      setSidebardata({ ...sidebardata, searchTerm: e.target.value });
-    }
-
-    if (
-      e.target.id === 'parking' ||
-      e.target.id === 'furnished' ||
-      e.target.id === 'offer'
-    ) {
-      setSidebardata({
-        ...sidebardata, [e.target.id]: e.target.checked || e.target.checked === 'true' ? true : false,
-      });
-    }
-
-    if (e.target.id === 'sort_order') {
-      const sort = e.target.value.split('_')[0] || 'created_at';
-
-      const order = e.target.value.split('_')[1] || 'desc';
-
-      setSidebardata({ ...sidebardata, sort, order });
-    }
-  };
+  const set = (patch) => setFilters((f) => ({ ...f, ...patch }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const urlParams = new URLSearchParams();
-    urlParams.set('searchTerm', sidebardata.searchTerm);
-    urlParams.set('type', sidebardata.type);
-    urlParams.set('parking', sidebardata.parking);
-    urlParams.set('furnished', sidebardata.furnished);
-    urlParams.set('offer', sidebardata.offer);
-    urlParams.set('sort', sidebardata.sort);
-    urlParams.set('order', sidebardata.order);
-    const searchQuery = urlParams.toString();
-    navigate(`/search?${searchQuery}`);
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([k, v]) => params.set(k, v));
+    setShowFilters(false);
+    navigate(`/search?${params.toString()}`);
   };
 
-  const onShowMoreClick = async () => {
-    const numberOfListings = listings.length;
-    const startIndex = numberOfListings;
-    const urlParams = new URLSearchParams(location.search);
-    urlParams.set('startIndex', startIndex);
-    const searchQuery = urlParams.toString();
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/listing/get?${searchQuery}`, { credentials: "include" });
-    const data = await res.json();
-    console.log('Search query:', searchQuery);
-console.log('Fetched data:', data);
-    if (data.length < 9) {
-      setShowMore(false);
+  const handleReset = () => navigate("/search");
+
+  const onShowMore = async () => {
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams(search);
+      params.set("startIndex", listings.length);
+      const res = await fetch(`${API}/api/listing/get?${params.toString()}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setListings((prev) => [...prev, ...data]);
+        if (data.length < PAGE_SIZE) setShowMore(false);
+      }
+    } finally {
+      setLoadingMore(false);
     }
-    setListings([...listings, ...data]);
   };
+
+  const typeBtn = (value, label) => (
+    <button
+      type="button"
+      onClick={() => set({ type: value })}
+      className={`flex-1 rounded-md py-2 text-sm font-semibold transition ${
+        filters.type === value
+          ? "bg-blue-700 text-white"
+          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
+  const check = (id, label) => (
+    <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+      <input
+        type="checkbox"
+        checked={filters[id]}
+        onChange={(e) => set({ [id]: e.target.checked })}
+        className="h-4 w-4 accent-blue-700"
+      />
+      {label}
+    </label>
+  );
+
   return (
-    <>
-    <Navbar/>
-    <div className='flex flex-col md:flex-row mt-20'>
-      <div className='p-7  border-b-2 md:border-r-2 md:min-h-screen'>
-        <form onSubmit={handleSubmit} className='flex flex-col gap-8'>
-          <div className='flex items-center gap-2'>
-            <label className='whitespace-nowrap font-semibold'>
-              Search Term:
-            </label>
-            <input
-              type='text'
-              id='searchTerm'
-              placeholder='Search...'
-              className='border rounded-lg p-3 w-full'
-              value={sidebardata.searchTerm}
-              onChange={handleChange}
-            />
-          </div>
-          <div className='flex gap-2 flex-wrap items-center'>
-            <label className='font-semibold'>Type:</label>
-            <div className='flex gap-2'>
-              <input
-                type='checkbox'
-                id='all'
-                className='w-5'
-                onChange={handleChange}
-                checked={sidebardata.type === 'all'}
-              />
-              <span>Rent & Sale</span>
-            </div>
-            <div className='flex gap-2'>
-              <input
-                type='checkbox'
-                id='rent'
-                className='w-5'
-                onChange={handleChange}
-                checked={sidebardata.type === 'rent'}
-              />
-              <span>Rent</span>
-            </div>
-            <div className='flex gap-2'>
-              <input
-                type='checkbox'
-                id='sale'
-                className='w-5'
-                onChange={handleChange}
-                checked={sidebardata.type === 'sale'}
-              />
-              <span>Sale</span>
-            </div>
-            <div className='flex gap-2'>
-              <input
-                type='checkbox'
-                id='offer'
-                className='w-5'
-                onChange={handleChange}
-                checked={sidebardata.offer}
-              />
-              <span>Offer</span>
-            </div>
-          </div>
-          <div className='flex gap-2 flex-wrap items-center'>
-            <label className='font-semibold'>Amenities:</label>
-            <div className='flex gap-2'>
-              <input
-                type='checkbox'
-                id='parking'
-                className='w-5'
-                onChange={handleChange}
-                checked={sidebardata.parking}
-              />
-              <span>Parking</span>
-            </div>
-            <div className='flex gap-2'>
-              <input
-                type='checkbox'
-                id='furnished'
-                className='w-5'
-                onChange={handleChange}
-                checked={sidebardata.furnished}
-              />
-              <span>Furnished</span>
-            </div>
-          </div>
-          <div className='flex items-center gap-2'>
-            <label className='font-semibold'>Sort:</label>
-            <select
-              onChange={handleChange}
-              defaultValue={'created_at_desc'}
-              id='sort_order'
-              className='border rounded-lg p-3'
-            >
-              <option value='regularPrice_desc'>Price high to low</option>
-              <option value='regularPrice_asc'>Price low to hight</option>
-              <option value='createdAt_desc'>Latest</option>
-              <option value='createdAt_asc'>Oldest</option>
-            </select>
-          </div>
-          <button className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95'>
-            Search
-          </button>
-        </form>
-      </div>
-      <div className='flex-1'>
-        <h1 className='text-3xl font-semibold border-b p-3 text-slate-700 mt-5'>
-          Listing results:
-        </h1>
-        <div className='p-7 flex flex-wrap gap-4'>
-          {!loading && listings.length === 0 && (
-            <p className='text-xl text-slate-700'>No listing found!</p>
-          )}
-          {loading && (
-            <p className='text-xl text-slate-700 text-center w-full'>
-              Loading...
-            </p>
-          )}
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        {/* Mobile filter toggle */}
+        <button
+          onClick={() => setShowFilters((s) => !s)}
+          className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg bg-white py-2.5 font-semibold text-slate-700 shadow-sm lg:hidden"
+        >
+          <FaSlidersH size={14} /> {showFilters ? "Hide filters" : "Filters"}
+        </button>
 
-          {!loading &&
-            listings &&
-            listings.map((listing) => (
-              <ListingItem key={listing._id} listing={listing} />
-            ))}
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          {/* ---------- Filters ---------- */}
+          <aside
+            className={`${showFilters ? "block" : "hidden"} h-fit rounded-2xl bg-white p-5 shadow-sm lg:sticky lg:top-20 lg:block`}
+          >
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Search</label>
+                <input
+                  value={filters.searchTerm}
+                  onChange={(e) => set({ searchTerm: e.target.value })}
+                  placeholder="City, area or name"
+                  className={inputCls}
+                />
+              </div>
 
-          {showMore && (
-            <button
-              onClick={onShowMoreClick}
-              className='text-green-700 hover:underline p-7 text-center w-full'
-            >
-              Show more
-            </button>
-          )}
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Type</label>
+                <div className="flex gap-2">
+                  {typeBtn("all", "All")}
+                  {typeBtn("rent", "Rent")}
+                  {typeBtn("sale", "Sale")}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Filters</label>
+                <div className="space-y-2">
+                  {check("offer", "Special offers")}
+                  {check("parking", "Parking")}
+                  {check("furnished", "Furnished")}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Sort by</label>
+                <select
+                  value={`${filters.sort}_${filters.order}`}
+                  onChange={(e) => {
+                    const [sort, order] = e.target.value.split("_");
+                    set({ sort, order });
+                  }}
+                  className={inputCls}
+                >
+                  <option value="createdAt_desc">Latest</option>
+                  <option value="createdAt_asc">Oldest</option>
+                  <option value="regularPrice_asc">Price: low to high</option>
+                  <option value="regularPrice_desc">Price: high to low</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-700 py-2.5 font-semibold text-white transition hover:bg-blue-800"
+                >
+                  <FaSearch size={13} /> Search
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Reset
+                </button>
+              </div>
+            </form>
+          </aside>
+
+          {/* ---------- Results ---------- */}
+          <section>
+            <h1 className="mb-4 text-xl font-bold text-slate-900 sm:text-2xl">
+              {loading ? "Searching..." : `${listings.length}${showMore ? "+" : ""} listing${listings.length === 1 ? "" : "s"} found`}
+            </h1>
+
+            {error && (
+              <p className="rounded-md bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600">
+                Could not load listings. Please try again.
+              </p>
+            )}
+
+            {!loading && !error && listings.length === 0 && (
+              <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white p-10 text-center">
+                <p className="font-semibold text-slate-800">No listings found</p>
+                <p className="mt-1 text-sm text-slate-500">Try changing or resetting your filters.</p>
+              </div>
+            )}
+
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {loading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-72 animate-pulse rounded-xl bg-slate-200" />
+                  ))
+                : listings.map((l) => <ListingItem key={l._id} listing={l} />)}
+            </div>
+
+            {showMore && !loading && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={onShowMore}
+                  disabled={loadingMore}
+                  className="rounded-lg border border-blue-700 px-6 py-2.5 font-semibold text-blue-700 transition hover:bg-blue-50 disabled:opacity-60"
+                >
+                  {loadingMore ? "Loading..." : "Show more"}
+                </button>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </div>
-    </>
   );
 }
