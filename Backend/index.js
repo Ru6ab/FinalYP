@@ -25,10 +25,15 @@ console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("isProduction:", isProduction);
 
 // ─── Database ────────────────────────────────────────────────
-mongoose
-  .connect(process.env.MONGO)
-  .then(() => console.log("Connected to database"))
-  .catch((err) => console.error("DB connection error:", err));
+// mongoose
+//   .connect(process.env.MONGO)
+//   .then(() => console.log("Connected to database"))
+//   .catch((err) => console.error("DB connection error:", err));
+const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) return;
+  await mongoose.connect(process.env.MONGO, { serverSelectionTimeoutMS: 15000 });
+  console.log("Connected to database");
+};
 
 // ─── App Setup ───────────────────────────────────────────────
 const app = express();
@@ -42,6 +47,17 @@ app.use(
     credentials: true,
   })
 );
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("DB connection error:", err.message);
+    res.status(500).json({ message: "DB connection failed" });
+  }
+});
+
+
 
 // ─── Socket.io ───────────────────────────────────────────────
 const server = http.createServer(app);
