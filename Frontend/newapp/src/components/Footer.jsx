@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaEnvelope } from "react-icons/fa";
 
 import { useAuthModal } from "./AuthModalProvider";
-import Logo from "./logo";
+import Logo from "./Logo";
 
 const explore = [
   { label: "Buy", to: "/search?type=sale" },
