@@ -94,14 +94,14 @@ app.use("/api/admin", adminRouter);
 app.use("/api/contact", contactRouter);
 
 // ─── Serve React (Production) ────────────────────────────────
-if (isProduction) {
-  const clientDist = path.join(__dirname, "../Frontend/newapp/dist");
-  console.log("Serving React from:", clientDist);
-  app.use(express.static(clientDist));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(clientDist, "index.html"));
-  });
-}
+// if (isProduction) {
+//   const clientDist = path.join(__dirname, "../Frontend/newapp/dist");
+//   console.log("Serving React from:", clientDist);
+//   app.use(express.static(clientDist));
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.join(clientDist, "index.html"));
+//   });
+// }
 
 // ─── Global Error Handler ────────────────────────────────────
 app.use((err, req, res, next) => {
