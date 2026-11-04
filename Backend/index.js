@@ -39,7 +39,12 @@ const connectDB = async () => {
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:5173"].filter(Boolean);
+// const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:5173"].filter(Boolean);
+const allowedOrigins = [
+  process.env.CLIENT_URL?.replace(/\/$/, ""),
+  "https://final-yp-frontend.vercel.app",
+  "http://localhost:5173",
+].filter(Boolean);
 
 app.use(
   cors({
