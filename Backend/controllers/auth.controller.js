@@ -40,9 +40,10 @@ export const signup = async (req, res, next) => {
 
 
 export const signin = async (req, res) => {
-  const { email, password } = req.body;
+ 
  
   try {
+     const { email, password } = req.body;
     console.log(" SIGNIN body received:", req.body);
     const validUser = await User.findOne({ email });
     if (!validUser)

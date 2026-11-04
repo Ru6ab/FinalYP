@@ -6,12 +6,13 @@ import bcryptjs from "bcryptjs"
 
 
 export const verifyUser = async (req, res, next) => {
+   try {
     console.log("🔍 req.file:", req.file);   // ← add this
   console.log("🔍 req.body:", req.body); 
     if(req.user.id !== req.params.id){
             return  next(errorHandler(403,"Invalid accesss"))
         }
-  try {
+ 
     if (req.body.password) {
       req.body.password = bcryptjs.hashSync(req.body.password, 10);
     }

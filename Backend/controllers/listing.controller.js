@@ -114,17 +114,7 @@ console.log("Updated imgs:", updatedImgUrls);
   }
 };
 
-//  export const getListing = async(req,res,next)=>{
-//   try{
-//     const listing = await Listing.findById(req.params.id)
-//     if(!listing){
-//       return next(errorHandler(404,"listing not found"))
-//     }
-//   res.status(200).json(listing)
-//   }catch(error){
-//    next(error)
-//   }
-//  }
+
 export const getListing = async (req, res, next) => {
   try {
     const listing = await Listing.findById(req.params.id);
@@ -137,7 +127,7 @@ export const getListing = async (req, res, next) => {
 };
 
 
-// export const getListings = async (req, res, next) => {
+
 //   try {
 //     const limit = parseInt(req.query.limit) || 9;
 //     const page = parseInt(req.query.page) || 1;
