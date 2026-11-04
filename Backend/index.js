@@ -37,6 +37,12 @@ const connectDB = async () => {
 
 // ─── App Setup ───────────────────────────────────────────────
 const app = express();
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 // const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:5173"].filter(Boolean);
@@ -46,12 +52,7 @@ const allowedOrigins = [
   "http://localhost:5173",
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  })
-);
+
 app.use(async (req, res, next) => {
   try {
     await connectDB();
