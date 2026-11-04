@@ -5,9 +5,10 @@ import jwt from "jsonwebtoken";
 
 const passwordPattern =
   /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
+ 
 
 export const signup = async (req, res, next) => {
+  try{
   const { email, password } = req.body;
 
   if (!passwordPattern.test(password)) {
@@ -20,7 +21,7 @@ export const signup = async (req, res, next) => {
 
   const newUser = new User({ email, password: hashedPassword });
 
-  try {
+  
     await newUser.save();
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
 
